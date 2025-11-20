@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import ErrorBoundary from "./ErrorBoundary";
 
 export default function MyClubTab() {
-  const { data: memberships, isLoading, isError, error } = useMyClubMembership();
+  const { data, isLoading, isError, error } = useMyClubMembership();
+  const memberships = data?.items ?? [];
 
   console.log("🔍 [COMPONENT DEBUG] MyClubTab render - isLoading:", isLoading);
   console.log("🔍 [COMPONENT DEBUG] MyClubTab render - isError:", isError);
@@ -24,17 +25,20 @@ export default function MyClubTab() {
   }
 
   // ⚠️ 데이터 정규화 - 항상 배열로 처리
-  const validMemberships = Array.isArray(memberships) ? memberships : [];
+  const validMemberships = Array.isArray(memberships)
+    ? memberships.filter((m) => m && m.club)
+    : [];
   console.log("🔍 [COMPONENT DEBUG] validMemberships count:", validMemberships.length);
   console.log("🔍 [COMPONENT DEBUG] validMemberships data:", JSON.stringify(validMemberships, null, 2));
-  
+
   // ✅ 활성 멤버십 찾기 (membership.isActive가 없으면 기본값 true로 간주)
-  const activeMembership = validMemberships.find((m) => {
-    const hasClub = m?.club || m?.clubId;
-    const isActive = m?.membership?.isActive !== false; // undefined도 true로 간주
-    console.log("🔍 [COMPONENT DEBUG] Checking membership:", { hasClub: !!hasClub, isActive, item: m });
-    return hasClub && isActive;
-  });
+  const activeMembership =
+    validMemberships.find((m) => {
+      const hasClub = m?.club;
+      const isActive = m?.membership?.isActive !== false; // undefined도 true로 간주
+      console.log("🔍 [COMPONENT DEBUG] Checking membership:", { hasClub: !!hasClub, isActive, item: m });
+      return hasClub && isActive;
+    }) || validMemberships[0];
   console.log("🔍 [COMPONENT DEBUG] activeMembership found:", !!activeMembership);
   console.log("🔍 [COMPONENT DEBUG] activeMembership data:", activeMembership);
 
@@ -64,7 +68,7 @@ export default function MyClubTab() {
         <p className="text-muted-foreground text-sm mb-6">
           클럽에 가입하여 다른 회원들과 함께 테니스를 즐기세요
         </p>
-        <Button 
+        <Button
           className="bg-primary hover:bg-primary/90"
           data-testid="button-find-club"
         >

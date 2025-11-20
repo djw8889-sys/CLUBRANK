@@ -26,13 +26,52 @@ function getServerBaseUrl() {
 
 const BASE_URL = getServerBaseUrl();
 
+interface MembershipItem {
+  membership: any;
+  club: any;
+}
+
+function normalizeMembershipResponse(data: any, userId?: string): { items: MembershipItem[] } {
+  const extractItems = () => {
+    if (Array.isArray(data)) return data;
+    if (data && Array.isArray(data.items)) return data.items;
+    if (data && typeof data === "object") return [data];
+    return [];
+  };
+
+  const items = extractItems()
+    .map((item) => {
+      const club = item?.club ?? null;
+      if (!club) return null;
+
+      const membership =
+        item?.membership ??
+        (club
+          ? {
+              clubId: club.id,
+              userId,
+              isActive: true,
+              role: club.owner === userId ? "owner" : "member",
+              joinedAt: new Date(),
+            }
+          : null);
+
+      if (!membership) return null;
+
+      return { membership, club } as MembershipItem;
+    })
+    .filter(Boolean) as MembershipItem[];
+
+  return { items };
+}
+
 /**
  * 내 클럽 멤버십 조회
  */
 export function useMyClubMembership() {
   const { token, user } = useAuth();
 
-  const query = useQuery({
+  return useQuery({
     queryKey: ["my-club-membership", user?.uid],
     enabled: !!token && !!user,
     queryFn: async () => {
@@ -57,19 +96,12 @@ export function useMyClubMembership() {
       const data = await res.json();
       console.log("🔥 [CLIENT] RAW membership:", data);
 
-      return Array.isArray(data) ? data : [];
+      return normalizeMembershipResponse(data, user?.uid);
     },
     staleTime: 0,
     gcTime: 0,
     refetchOnMount: "always",
   });
-
-  return {
-    isLoading: query.isLoading,
-    isError: query.isError,
-    memberships: query.data || [],
-    refetch: query.refetch,
-  };
 }
 
 /**

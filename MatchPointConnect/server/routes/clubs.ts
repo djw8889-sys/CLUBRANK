@@ -2,6 +2,32 @@ import type { Express, Request, Response } from "express";
 import { authenticateUser } from "../auth.js";
 import { storage } from "../storage.js";
 
+function normalizeMembershipItems(memberships: any, userId: string) {
+  const baseItems = Array.isArray(memberships)
+    ? memberships
+    : memberships
+      ? [memberships]
+      : [];
+
+  return baseItems
+    .map((item) => {
+      const club = item?.club ?? (item?.clubId ? storage.getClubById(item.clubId) : null);
+      if (!club) return null;
+
+      const membership =
+        item?.membership ?? {
+          clubId: club.id,
+          userId,
+          isActive: item?.isActive ?? true,
+          role: club.owner === userId ? "owner" : "member",
+          joinedAt: item?.joinedAt ?? new Date(),
+        };
+
+      return { membership, club };
+    })
+    .filter(Boolean);
+}
+
 /**
  * Club 관련 API 라우트 등록
  */
@@ -30,8 +56,9 @@ export function registerClubRoutes(app: Express) {
 
         // 멤버십 + 클럽 데이터 구성
         const memberships = storage.getUserClubMemberships(authedUser);
+        const items = normalizeMembershipItems(memberships, authedUser);
 
-        return res.json(memberships);
+        return res.json({ items });
       } catch (error: any) {
         console.error("❌ [/api/users/:id/memberships] failed:", error);
         return res.status(500).json({ error: "멤버십 조회 실패" });
@@ -54,8 +81,9 @@ export function registerClubRoutes(app: Express) {
 
         await storage.ensureDefaultMembership(userId);
         const memberships = storage.getUserClubMemberships(userId);
+        const items = normalizeMembershipItems(memberships, userId);
 
-        return res.json(memberships);
+        return res.json({ items });
       } catch (error) {
         console.error("❌ [/api/clubs/my-membership] failed:", error);
         return res.status(500).json({ error: "멤버십 조회 실패" });
