@@ -32,6 +32,34 @@ const BASE_URL = getServerBaseUrl();
 export function useMyClubMembership() {
   const { token, user } = useAuth();
 
+  const normalizeMembership = (data: any) => {
+    if (!data) return [] as {
+      membership: { clubId: string; userId: string; role: string; isActive: boolean };
+      club: any;
+    }[];
+
+    const items = Array.isArray(data) ? data : [data];
+
+    return items
+      .map((item) => {
+        if (!item) return null;
+
+        const membershipData = item.membership ?? item;
+        const clubData = item.club ?? membershipData?.club ?? null;
+
+        return {
+          membership: {
+            clubId: membershipData?.clubId ?? clubData?.id ?? "",
+            userId: membershipData?.userId ?? "",
+            role: membershipData?.role ?? "",
+            isActive: membershipData?.isActive ?? true,
+          },
+          club: clubData,
+        };
+      })
+      .filter(Boolean);
+  };
+
   const query = useQuery({
     queryKey: ["my-club-membership", user?.uid],
     enabled: !!token && !!user,
@@ -57,7 +85,7 @@ export function useMyClubMembership() {
       const data = await res.json();
       console.log("🔥 [CLIENT] RAW membership:", data);
 
-      return Array.isArray(data) ? data : [];
+      return normalizeMembership(data);
     },
     staleTime: 0,
     gcTime: 0,
@@ -67,6 +95,7 @@ export function useMyClubMembership() {
   return {
     isLoading: query.isLoading,
     isError: query.isError,
+    data: query.data || [],
     memberships: query.data || [],
     refetch: query.refetch,
   };
