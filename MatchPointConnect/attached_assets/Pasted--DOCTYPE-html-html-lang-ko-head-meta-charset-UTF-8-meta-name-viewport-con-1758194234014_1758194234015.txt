@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Match Point - App Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .view { display: none; }
+        .view.active { display: flex; flex-direction: column; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; z-index: 50; }
+        .modal-content { background: white; padding: 1.5rem; border-radius: 0.75rem; max-width: 90%; width: 400px; }
+        .chat-bubble { max-width: 75%; padding: 0.5rem 1rem; border-radius: 1.25rem; }
+        .chat-bubble-sent { background-color: #34d399; color: white; border-bottom-right-radius: 0.25rem; align-self: flex-end; }
+        .chat-bubble-received { background-color: #e5e7eb; color: #1f2937; border-bottom-left-radius: 0.25rem; align-self: flex-start; }
+        .bottom-nav { position: sticky; bottom: 0; }
+        .profile-pic-preview { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #e5e7eb; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-gray-800 flex justify-center">
+
+    <div id="app-container" class="container mx-auto max-w-lg min-h-screen bg-white shadow-md flex flex-col">
+
+        <!-- 로딩 오버레이 -->
+        <div id="loading-overlay" class="modal-overlay hidden">
+            <div class="loader"></div>
+        </div>
+
+        <!-- View -1: 스플래시 화면 -->
+        <div id="splash-view" class="view active flex-grow justify-center items-center bg-emerald-500">
+            <h1 class="text-5xl font-bold text-white">🎾 Match Point</h1>
+        </div>
+
+        <!-- View 0: 로그인 화면 -->
+        <div id="login-view" class="view flex-grow justify-center items-center p-6">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">🎾 Match Point</h1>
+            <p class="text-gray-600 mb-12">당신의 테니스 파트너를 찾아보세요</p>
+            <div class="w-full max-w-xs space-y-3">
+                <button id="kakao-login-btn" class="w-full bg-yellow-400 text-gray-800 font-bold py-3 rounded-lg flex items-center justify-center"><i class="fas fa-comment mr-2"></i> 카카오로 시작하기</button>
+                <button id="google-login-btn" class="w-full bg-white border border-gray-300 text-gray-700 font-bold py-3 rounded-lg flex items-center justify-center"><i class="fab fa-google mr-2"></i> 구글로 시작하기</button>
+            </div>
+             <p class="text-xs text-gray-400 mt-8">카카오 로그인은 추가 설정이 필요합니다.</p>
+        </div>
+
+        <!-- View 1: 프로필 설정 화면 -->
+        <div id="profile-setup-view" class="view flex-grow p-6 overflow-y-auto">
+            <h1 class="text-2xl font-bold text-gray-800 mb-6">프로필 설정</h1>
+            <form id="profile-form" class="space-y-6">
+                <!-- ... (HTML 내용은 이전과 동일) ... -->
+                <div class="flex flex-col items-center">
+                    <img id="profile-pic-preview" src="https://placehold.co/100x100/E2E8F0/4A5568?text=PIC" alt="Profile picture" class="profile-pic-preview">
+                    <label for="profile-pic" class="mt-2 text-sm font-medium text-emerald-600 cursor-pointer">사진 변경</label>
+                    <input type="file" id="profile-pic" class="hidden" accept="image/*">
+                </div>
+                <div>
+                    <label for="username" class="block text-sm font-medium text-gray-700">닉네임</label>
+                    <input type="text" id="username" class="mt-1 block w-full p-2 border border-gray-300 rounded-lg" required>
+                </div>
+                <div>
+                    <label for="ntrp" class="block text-sm font-medium text-gray-700">NTRP</label>
+                    <select id="ntrp" class="mt-1 block w-full p-2 border border-gray-300 rounded-lg" required>
+                        <option value="2.5">2.5</option><option value="3.0">3.0</option><option value="3.5" selected>3.5</option><option value="4.0">4.0</option><option value="4.5">4.5</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="region" class="block text-sm font-medium text-gray-700">주요 활동 지역</label>
+                    <input type="text" id="region" placeholder="예: 서울 강남구" class="mt-1 block w-full p-2 border border-gray-300 rounded-lg" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">가능 시간 (복수선택 가능)</label>
+                    <div id="available-times" class="grid grid-cols-2 gap-2 mt-2">
+                        <label class="p-2 border rounded-lg text-center cursor-pointer has-[:checked]:bg-emerald-100 has-[:checked]:border-emerald-400"><input type="checkbox" value="평일 오전" class="mr-2">평일 오전</label>
+                        <label class="p-2 border rounded-lg text-center cursor-pointer has-[:checked]:bg-emerald-100 has-[:checked]:border-emerald-400"><input type="checkbox" value="평일 오후" class="mr-2">평일 오후</label>
+                        <label class="p-2 border rounded-lg text-center cursor-pointer has-[:checked]:bg-emerald-100 has-[:checked]:border-emerald-400"><input type="checkbox" value="주말 오전" class="mr-2">주말 오전</label>
+                        <label class="p-2 border rounded-lg text-center cursor-pointer has-[:checked]:bg-emerald-100 has-[:checked]:border-emerald-400"><input type="checkbox" value="주말 오후" class="mr-2">주말 오후</label>
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-emerald-500 text-white font-bold py-3 rounded-lg hover:bg-emerald-600">저장하고 시작하기</button>
+            </form>
+        </div>
+
+        <!-- View 2: 메인 화면 (탭 컨테이너) -->
+        <div id="main-view" class="view flex-grow">
+            <!-- ... (HTML 내용은 이전과 동일) ... -->
+             <header class="bg-white p-4 border-b border-gray-200 sticky top-0 z-10 flex justify-between items-center">
+                <h1 id="main-header" class="text-xl font-bold text-gray-800">매치 찾기</h1>
+                <div class="text-right">
+                     <p class="font-semibold text-emerald-600"><i class="fa-solid fa-coins mr-1"></i><span id="user-points">0</span> P</p>
+                </div>
+            </header>
+
+            <main class="flex-grow p-4 overflow-y-auto">
+                <!-- 탭 컨텐츠 영역 -->
+                <div id="player-tab" class="tab-content">
+                    <div class="mb-6">
+                        <div class="grid grid-cols-3 gap-3">
+                            <select id="sort-filter" class="w-full p-2 border rounded-lg"><option value="distance">거리순</option><option value="ntrp">NTRP순</option></select>
+                            <select id="ntrp-filter" class="w-full p-2 border rounded-lg"><option value="all">모든 NTRP</option><option value="3.0">3.0</option><option value="3.5">3.5</option><option value="4.0">4.0</option></select>
+                            <select id="time-filter" class="w-full p-2 border rounded-lg"><option value="all">모든 시간</option><option>평일 오전</option><option>평일 오후</option><option>주말 오전</option><option>주말 오후</option></select>
+                        </div>
+                    </div>
+                    <div id="player-list" class="space-y-4"></div>
+                </div>
+                <div id="chat-list-tab" class="tab-content"><p class="text-center text-gray-500 pt-10">진행중인 채팅이 없습니다.</p></div>
+                <div id="ranking-tab" class="tab-content">
+                    <div class="bg-gray-100 p-3 rounded-lg mb-4 text-xs text-gray-600">
+                        <h3 class="font-bold mb-1">🏆 랭킹 시스템 안내</h3>
+                        <ul class="list-disc list-inside space-y-1">
+                            <li>랭킹은 분기별(3개월)로 초기화됩니다.</li>
+                            <li>분기별 1~3위에게는 3000/2000/1000 P가 지급됩니다.</li>
+                            <li>연말에는 종합 포인트를 통해 TIER 시스템이 도입될 예정입니다.</li>
+                        </ul>
+                    </div>
+                    <div id="ranking-list" class="space-y-2"></div>
+                </div>
+                <div id="community-tab" class="tab-content">
+                    <button id="new-post-btn" class="w-full bg-emerald-500 text-white font-bold py-2 rounded-lg mb-4">새 글 작성하기</button>
+                    <div id="community-post-list" class="space-y-3"></div>
+                </div>
+                <div id="profile-tab" class="tab-content">
+                    <div class="flex flex-col items-center p-4">
+                        <img id="profile-main-pic" src="https://placehold.co/120x120/E2E8F0/4A5568?text=PIC" class="w-32 h-32 rounded-full object-cover border-4 border-gray-200">
+                        <h2 id="profile-main-name" class="text-2xl font-bold mt-4"></h2>
+                        <p id="profile-main-info" class="text-gray-500 mt-1"></p>
+                    </div>
+                    <div class="mt-6 space-y-2">
+                        <button id="charge-points-btn" class="w-full text-left p-4 bg-gray-100 rounded-lg flex justify-between items-center"><span><i class="fa-solid fa-coins w-6 mr-2 text-yellow-500"></i>포인트 충전</span><i class="fas fa-chevron-right text-gray-400"></i></button>
+                        <button id="feedback-btn" class="w-full text-left p-4 bg-gray-100 rounded-lg flex justify-between items-center"><span><i class="fa-solid fa-lightbulb w-6 mr-2 text-blue-500"></i>서비스 개선 제안</span><i class="fas fa-chevron-right text-gray-400"></i></button>
+                         <button id="logout-btn" class="w-full text-left p-4 bg-gray-100 rounded-lg flex justify-between items-center"><span><i class="fa-solid fa-right-from-bracket w-6 mr-2 text-red-500"></i>로그아웃</span><i class="fas fa-chevron-right text-gray-400"></i></button>
+                    </div>
+                </div>
+            </main>
+
+            <nav class="bottom-nav bg-white border-t border-gray-200 grid grid-cols-5 text-center">
+                <button class="nav-btn p-3 text-emerald-500" data-tab="player-tab" data-header="매치 찾기"><i class="fas fa-users text-xl"></i><span class="block text-xs">매치 찾기</span></button>
+                <button class="nav-btn p-3 text-gray-400" data-tab="chat-list-tab" data-header="채팅"><i class="fas fa-comment-dots text-xl"></i><span class="block text-xs">채팅</span></button>
+                <button class="nav-btn p-3 text-gray-400" data-tab="ranking-tab" data-header="랭킹"><i class="fas fa-trophy text-xl"></i><span class="block text-xs">랭킹</span></button>
+                <button class="nav-btn p-3 text-gray-400" data-tab="community-tab" data-header="커뮤니티"><i class="fas fa-clipboard-list text-xl"></i><span class="block text-xs">커뮤니티</span></button>
+                <button class="nav-btn p-3 text-gray-400" data-tab="profile-tab" data-header="내 프로필"><i class="fas fa-user-circle text-xl"></i><span class="block text-xs">프로필</span></button>
+            </nav>
+        </div>
+        
+        <!-- 다른 View들 (채팅, 게시판 등) -->
+        <div id="chat-view" class="view flex-grow"></div>
+        <div id="new-post-view" class="view flex-grow p-4"></div>
+        <div id="points-view" class="view flex-grow"></div>
+        <div id="feedback-view" class="view flex-grow"></div>
+    </div>
+    
+    <!-- Modals -->
+    <!-- ... (HTML 내용은 이전과 동일) ... -->
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+
+<script>
+    // ------------------------------------------------------------------
+    // 1. Firebase 설정: 아래 부분을 자신의 Firebase 프로젝트 설정 값으로 바꾸세요.
+    // ------------------------------------------------------------------
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_AUTH_DOMAIN",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_STORAGE_BUCKET",
+        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+
+    // Firebase 앱 초기화
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    // --- 앱 상태 관리 ---
+    let currentUser = null; // 현재 로그인된 사용자 정보
+
+    // --- DOM 요소 ---
+    const views = {
+        splash: document.getElementById('splash-view'),
+        login: document.getElementById('login-view'),
+        profileSetup: document.getElementById('profile-setup-view'),
+        main: document.getElementById('main-view'),
+    };
+    const loadingOverlay = document.getElementById('loading-overlay');
+
+    // --- 유틸리티 함수 ---
+    const showView = (viewName) => {
+        Object.values(views).forEach(view => view.classList.remove('active'));
+        views[viewName].classList.add('active');
+    };
+    const showLoader = (show) => {
+        loadingOverlay.classList.toggle('hidden', !show);
+    };
+
+    // --- 앱 초기화 및 인증 상태 리스너 ---
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            auth.onAuthStateChanged(async (user) => {
+                if (user) {
+                    // 사용자가 로그인 됨
+                    const userDoc = await db.collection('users').doc(user.uid).get();
+                    if (userDoc.exists) {
+                        // 프로필이 있는 사용자
+                        currentUser = { uid: user.uid, ...userDoc.data() };
+                        await setupMainApp();
+                        showView('main');
+                    } else {
+                        // 프로필이 없는 신규 사용자 (최초 소셜 로그인)
+                        showView('profileSetup');
+                    }
+                } else {
+                    // 사용자가 로그아웃 됨
+                    currentUser = null;
+                    showView('login');
+                }
+                views.splash.classList.remove('active'); // 스플래시 화면 숨기기
+            });
+        }, 1500); // 스플래시 화면을 1.5초간 보여줌
+
+        setupEventListeners();
+    });
+
+    // --- 메인 앱 설정 ---
+    async function setupMainApp() {
+        // 유저 정보 UI 업데이트
+        document.getElementById('user-points').textContent = currentUser.points || 0;
+        document.getElementById('profile-main-pic').src = currentUser.photoURL || 'https://placehold.co/120x120/E2E8F0/4A5568?text=PIC';
+        document.getElementById('profile-main-name').textContent = currentUser.username;
+        document.getElementById('profile-main-info').textContent = `${currentUser.ntrp} | ${currentUser.region}`;
+        renderPlayerList(); // 플레이어 목록 렌더링
+    }
+
+    // --- 플레이어 목록 렌더링 ---
+    async function renderPlayerList() {
+        const playerListEl = document.getElementById('player-list');
+        playerListEl.innerHTML = '<div class="text-center"><div class="loader inline-block"></div></div>';
+        
+        const usersSnapshot = await db.collection('users').where('username', '!=', null).get();
+        let players = [];
+        usersSnapshot.forEach(doc => {
+            if (doc.id !== currentUser.uid) { // 자기 자신은 제외
+                 players.push({ id: doc.id, ...doc.data() });
+            }
+        });
+
+        playerListEl.innerHTML = '';
+        if(players.length === 0) {
+            playerListEl.innerHTML = '<p class="text-center text-gray-500">아직 다른 플레이어가 없어요.</p>';
+            return;
+        }
+
+        players.forEach(player => {
+            const times = player.availableTimes ? player.availableTimes.join(', ') : '시간 정보 없음';
+            const playerCard = `
+                <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                    <div class="flex items-center space-x-4">
+                        <img src="${player.photoURL || 'https://placehold.co/64x64/E2E8F0/4A5568?text=P'}" alt="${player.username}" class="w-16 h-16 rounded-full object-cover">
+                        <div class="flex-1">
+                            <h3 class="font-bold text-lg">${player.username}</h3>
+                            <p class="text-sm text-gray-500">NTRP ${player.ntrp} | ${player.region}</p>
+                            <p class="text-xs text-emerald-600 mt-1"><i class="far fa-clock mr-1"></i>${times}</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex justify-end">
+                        <button class="match-request-btn bg-emerald-500 text-white font-bold py-2 px-6 rounded-lg" data-player-id="${player.id}">매치 신청</button>
+                    </div>
+                </div>`;
+            playerListEl.innerHTML += playerCard;
+        });
+    }
+
+    // --- 이벤트 리스너 설정 ---
+    function setupEventListeners() {
+        // 로그인 버튼
+        document.getElementById('google-login-btn').addEventListener('click', () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider).catch(error => console.error("Google Login Error:", error));
+        });
+        document.getElementById('kakao-login-btn').addEventListener('click', () => {
+            alert('카카오 로그인은 Firebase 콘솔에서 추가 설정이 필요합니다.');
+        });
+        
+        // 로그아웃 버튼
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            if(confirm('로그아웃 하시겠습니까?')) {
+                auth.signOut();
+            }
+        });
+
+        // 프로필 폼 제출
+        document.getElementById('profile-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            showLoader(true);
+            const user = auth.currentUser;
+            const profilePicFile = document.getElementById('profile-pic').files[0];
+            let photoURL = user.photoURL;
+
+            if (profilePicFile) {
+                const storageRef = storage.ref(`profile_pics/${user.uid}/${profilePicFile.name}`);
+                const snapshot = await storageRef.put(profilePicFile);
+                photoURL = await snapshot.ref.getDownloadURL();
+            }
+
+            const availableTimes = [];
+            document.querySelectorAll('#available-times input:checked').forEach(el => availableTimes.push(el.value));
+
+            const userProfile = {
+                username: document.getElementById('username').value,
+                ntrp: document.getElementById('ntrp').value,
+                region: document.getElementById('region').value,
+                availableTimes: availableTimes,
+                photoURL: photoURL,
+                email: user.email,
+                points: 100, // 초기 포인트
+                wins: 0,
+                losses: 0
+            };
+
+            await db.collection('users').doc(user.uid).set(userProfile);
+            currentUser = { uid: user.uid, ...userProfile };
+            await setupMainApp();
+            showLoader(false);
+            showView('main');
+        });
+
+        // 프로필 사진 미리보기
+        document.getElementById('profile-pic').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    document.getElementById('profile-pic-preview').src = event.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 하단 내비게이션
+        const navButtons = document.querySelectorAll('.nav-btn');
+        navButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const targetTab = button.dataset.tab;
+                const targetHeader = button.dataset.header;
+
+                document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+                document.getElementById(targetTab).classList.add('active');
+                
+                navButtons.forEach(btn => btn.classList.replace('text-emerald-500', 'text-gray-400'));
+                button.classList.replace('text-gray-400', 'text-emerald-500');
+
+                document.getElementById('main-header').textContent = targetHeader;
+                
+                // 탭에 맞는 데이터 로드
+                if (targetTab === 'player-tab') renderPlayerList();
+                // if (targetTab === 'ranking-tab') renderRankingList(); ...
+            });
+        });
+    }
+</script>
+</body>
+</html>
+

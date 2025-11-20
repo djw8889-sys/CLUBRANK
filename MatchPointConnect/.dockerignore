@@ -1,0 +1,39 @@
+# ==========================
+# Common ignore
+# ==========================
+node_modules
+dist
+.git
+.gitignore
+npm-debug.log
+Dockerfile
+.dockerignore
+
+# ==========================
+# Client includes
+# ==========================
+!client
+!client/package.json
+!client/package-lock.json
+!client/vite.config.ts
+!client/index.html
+!client/postcss.config.js
+!client/tailwind.config.ts
+!client/tsconfig.json
+
+# ==========================
+# Server includes
+# ==========================
+!server
+!server/package.json
+!server/package-lock.json
+!server/src
+!server/tsconfig.json
+
+# ==========================
+# Root includes
+# ==========================
+!package.json
+!package-lock.json
+!tsconfig.json
+!README.md

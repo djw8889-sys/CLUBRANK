@@ -1,0 +1,71 @@
+Replit AI, 지금부터 'Match Point' 앱의 치명적인 오류를 수정하고, 핵심 기능을 대폭 개선하는 최종 작업을 시작하겠습니다. 아래 요구사항들을 순서대로, 그리고 매우 정확하게 코드에 반영해주세요.
+
+Phase 0: [긴급] 매칭 신청 오류 해결 (보안 규칙 수정)
+현재 '매치 신청' 시 발생하는 "Missing or insufficient permissions" 오류를 해결하는 것이 최우선 과제입니다. Firebase Firestore의 보안 규칙을 아래 내용으로 완전히 교체해주세요.
+
+[작업 파일]
+
+Firebase Console의 Firestore Database → 규칙(Rules) 탭
+
+[신규 보안 규칙 코드]
+
+JavaScript
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Users: 사용자는 자신의 정보만 수정/삭제할 수 있고, 다른 사람의 정보는 읽을 수만 있습니다.
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update, delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Posts: 로그인한 사용자는 모든 게시글을 읽고 쓸 수 있습니다.
+    match /posts/{postId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Matches: 로그인한 사용자는 매치를 생성(create)하거나, 자신이 관련된 매치 정보를 읽고 수정(update)할 수 있습니다.
+    match /matches/{matchId} {
+      allow read, update: if request.auth != null && resource.data.participants.hasAny([request.auth.uid]);
+      allow create: if request.auth != null;
+    }
+
+    // Friends: 로그인한 사용자는 친구 관계 문서를 생성(create)하거나, 자신이 관련된 문서 정보를 읽고 수정(update)할 수 있습니다.
+     match /friends/{friendshipId} {
+      allow read, update: if request.auth != null && (resource.data.userId1 == request.auth.uid || resource.data.userId2 == request.auth.uid);
+      allow create: if request.auth != null;
+    }
+  }
+}
+Phase 1 ~ Phase 6
+(이전 프롬프트와 동일한 내용 - 생략)
+
+Phase 7 (신규): 사용자 프로필 팝업 및 친구 추가 기능
+사용자 간의 상호작용을 증진시키기 위해, 다른 사용자의 프로필을 쉽게 확인하고 친구를 추가할 수 있는 기능을 구현합니다.
+
+[요구사항]
+
+백엔드 API 구축 (server/routes/users.ts 신규 생성):
+
+특정 사용자의 공개 프로필 정보를 ID로 조회할 수 있는 API 엔드포인트(GET /api/users/:userId)를 새로 만들어주세요. 이 API는 보안을 위해 이메일 같은 민감 정보를 제외하고 username, photoURL, ntrp, region, mannerScore 등 공개 가능한 정보만 반환해야 합니다.
+
+server/index.ts에 이 새로운 users.ts 라우트를 등록해주세요.
+
+프론트엔드 UI/UX 구현:
+
+재사용 가능한 UserProfileModal.tsx 컴포넌트를 새로 만들어주세요. 이 모달(팝업창)은 사용자의 프로필 사진, 닉네임, NTRP, 지역, 매너 점수를 보기 좋게 표시해야 합니다.
+
+모달 하단에는 '+ 친구 추가' 버튼을 포함시켜주세요.
+
+프론트엔드 로직 연결:
+
+CommunityTab.tsx와 RankingTab.tsx 컴포넌트에서, 다른 사용자의 프로필 사진이나 닉네임 부분을 클릭할 수 있도록 수정해주세요.
+
+클릭 시, 백엔드에 해당 유저의 ID로 정보를 요청하고, 받아온 데이터로 UserProfileModal을 화면에 띄워주세요.
+
+모달 안의 '+ 친구 추가' 버튼을 누르면, 이전에 Phase 5에서 만든 친구 요청 API(POST /api/friends/request)가 호출되도록 연결해주세요.
+
+위의 모든 작업을 완료하여, 사용자들이 더욱 편리하게 소통하고 관계를 맺을 수 있는 서비스로 개선해주세요.

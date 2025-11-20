@@ -1,0 +1,65 @@
+Firebase Config loaded successfully
+index-DEuiOt8H.js:4929 🏠 Home component render: Object
+index-DEuiOt8H.js:4929 🎡 Showing loading spinner
+index-DEuiOt8H.js:4929 🔄 Home useEffect triggered: Object
+index-DEuiOt8H.js:4929 ⏳ Still loading, staying in current view: splash
+index-DEuiOt8H.js:4874 Setting up Firebase Auth state listener...
+index-DEuiOt8H.js:4874 🔥 Firebase Auth state changed: Object
+index-DEuiOt8H.js:4874 🚪 User logged out
+index-DEuiOt8H.js:4874 🏁 Auth state processing complete
+index-DEuiOt8H.js:4929 🏠 Home component render: Object
+index-DEuiOt8H.js:4929 🎨 Rendering main UI with currentView: splash
+index-DEuiOt8H.js:4929 🔄 Home useEffect triggered: Object
+index-DEuiOt8H.js:4929 🔑 No user, switching to login
+index-DEuiOt8H.js:4929 🏠 Home component render: Object
+index-DEuiOt8H.js:4929 🎨 Rendering main UI with currentView: login
+index-DEuiOt8H.js:1467 Cross-Origin-Opener-Policy policy would block the window.closed call.
+e @ index-DEuiOt8H.js:1467이 오류 이해하기
+index-DEuiOt8H.js:1467 Cross-Origin-Opener-Policy policy would block the window.closed call.
+e @ index-DEuiOt8H.js:1467이 오류 이해하기
+index-DEuiOt8H.js:1467 Cross-Origin-Opener-Policy policy would block the window.closed call.
+e @ index-DEuiOt8H.js:1467이 오류 이해하기
+index-DEuiOt8H.js:1467 Cross-Origin-Opener-Policy policy would block the window.closed call.
+e @ index-DEuiOt8H.js:1467이 오류 이해하기
+index-DEuiOt8H.js:4874 🔥 Firebase Auth state changed: Object
+index-DEuiOt8H.js:4874 📄 Checking Firestore user document...
+index-DEuiOt8H.js:4874 Google popup sign-in successful: gs
+index-DEuiOt8H.js:4929 🏠 Home component render: Object
+index-DEuiOt8H.js:4929 🎨 Rendering main UI with currentView: login
+index-DEuiOt8H.js:4929 🔄 Home useEffect triggered: Object
+index-DEuiOt8H.js:4929 👤 User exists but profile incomplete, switching to profile-setup
+index-DEuiOt8H.js:4929 🏠 Home component render: Object
+index-DEuiOt8H.js:4929 🎨 Rendering main UI with currentView: profile-setup
+index-DEuiOt8H.js:4874 ✅ Found existing user document: Object
+index-DEuiOt8H.js:4874 🏁 Auth state processing complete
+index-DEuiOt8H.js:4929 🏠 Home component render: Object
+index-DEuiOt8H.js:4929 🎨 Rendering main UI with currentView: profile-setup
+index-DEuiOt8H.js:4929 🔄 Home useEffect triggered: Object
+index-DEuiOt8H.js:4929 ✅ User and profile complete, switching to main
+index-DEuiOt8H.js:4929 🏠 Home component render: Object
+index-DEuiOt8H.js:4929 🎨 Rendering main UI with currentView: main
+index-DEuiOt8H.js:4929 🏠 Home component render: Object
+index-DEuiOt8H.js:4929 🎨 Rendering main UI with currentView: main
+index-DEuiOt8H.js:40 ReferenceError: useQuery is not defined
+    at Zne (index-DEuiOt8H.js:4929:25645)
+    at ab (index-DEuiOt8H.js:38:16998)
+    at Hk (index-DEuiOt8H.js:40:44030)
+    at zk (index-DEuiOt8H.js:40:39766)
+    at JU (index-DEuiOt8H.js:40:39694)
+    at pg (index-DEuiOt8H.js:40:39547)
+    at ew (index-DEuiOt8H.js:40:35914)
+    at Uk (index-DEuiOt8H.js:40:34865)
+    at k (index-DEuiOt8H.js:25:1601)
+    at MessagePort.j (index-DEuiOt8H.js:25:1971)
+Bx @ index-DEuiOt8H.js:40이 오류 이해하기
+index-DEuiOt8H.js:40 Uncaught ReferenceError: useQuery is not defined
+    at Zne (index-DEuiOt8H.js:4929:25645)
+    at ab (index-DEuiOt8H.js:38:16998)
+    at Hk (index-DEuiOt8H.js:40:44030)
+    at zk (index-DEuiOt8H.js:40:39766)
+    at JU (index-DEuiOt8H.js:40:39694)
+    at pg (index-DEuiOt8H.js:40:39547)
+    at ew (index-DEuiOt8H.js:40:35914)
+    at Uk (index-DEuiOt8H.js:40:34865)
+    at k (index-DEuiOt8H.js:25:1601)
+    at MessagePort.j (index-DEuiOt8H.js:25:1971)이 오류 이해하기
